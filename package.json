@@ -1,0 +1,40 @@
+{
+  "name": "mtgsi-discord-bot",
+  "main": "dist/index.js",
+  "scripts": {
+    "start": "node dist/index.js",
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "lint": "eslint src/**/*.ts",
+    "lint:fix": "yarn eslint --fix src/**/*.ts"
+  },
+  "devDependencies": {
+    "@types/common-tags": "^1.8.0",
+    "@types/lodash": "^4.14.150",
+    "@types/node": "^13.11.1",
+    "@types/serialize-javascript": "^1.5.0",
+    "@types/ws": "^7.2.3",
+    "@typescript-eslint/eslint-plugin": "^2.27.0",
+    "@typescript-eslint/parser": "^2.27.0",
+    "common-tags": "^1.8.0",
+    "eslint": "^6.8.0",
+    "eslint-config-prettier": "^6.10.1",
+    "eslint-import-resolver-node": "^0.3.3",
+    "eslint-plugin-import": "^2.20.2",
+    "typescript": "^3.8.3"
+  },
+  "dependencies": {
+    "bufferutil": "^4.0.1",
+    "discord.js": "^12.1.1",
+    "discord.js-commando": "github:discordjs/Commando",
+    "dotenv": "^8.2.0",
+    "erlpack": "^0.1.3",
+    "lodash": "^4.17.15",
+    "serialize-javascript": "^3.0.0",
+    "utf-8-validate": "^5.0.2",
+    "zlib-sync": "^0.1.6"
+  },
+  "engines": {
+    "node": ">=12.0.0"
+  }
+}
