@@ -2,12 +2,12 @@ import { writeFileSync, readFileSync } from 'fs';
 import * as serialize from 'serialize-javascript';
 import { Match } from '../models/match';
 import { state } from '../state';
-import exp = require('constants');
 
 const PERSIST_FILE = '_persist.state.js';
 const EXPORT_FILE_TEMPLATE = 'tourney.{id}.json';
 
 interface ExportPackage {
+  tourneyId: string;
   rounds: Match[][];
 }
 export function exportActiveTourney(): boolean {
@@ -17,6 +17,7 @@ export function exportActiveTourney(): boolean {
   try {
     const fileOut = EXPORT_FILE_TEMPLATE.replace('{id}', state.tourney.id);
     const dump: ExportPackage = {
+      tourneyId: state.tourney.id,
       rounds: [],
     };
 
