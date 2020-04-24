@@ -1,4 +1,4 @@
-import { Message } from 'discord.js';
+import { Message, TextChannel } from 'discord.js';
 import { Command, CommandoClient, CommandoMessage } from 'discord.js-commando';
 import { Tourney } from '../../models/tourney';
 import { state } from '../../state';
@@ -25,7 +25,7 @@ module.exports = class ProvisionCommand extends Command {
   }
 
   run(message: CommandoMessage): Promise<Message | Message[]> {
-    state.tourney = new Tourney('provision1');
+    state.tourney = new Tourney('provision1', message.channel as TextChannel);
 
     for (const reg of registrations) {
       state.tourney.register(...reg);

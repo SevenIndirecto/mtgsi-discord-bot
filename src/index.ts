@@ -1,7 +1,8 @@
 require('dotenv').config();
 import * as path from 'path';
 import { CommandoClient } from 'discord.js-commando';
-import { persistState } from './util/persist';
+import { state } from './state';
+import { exportActiveTourney } from './util/persist';
 
 const client = new CommandoClient({
     commandPrefix: 'm!',
@@ -9,12 +10,12 @@ const client = new CommandoClient({
     invite: process.env.INVITE,
 });
 
-// TODO: Limit to channel?
 client.registry
     .registerDefaultTypes()
     .registerGroups([
         ['tourney', 'Tournament support'],
         ['organizer', 'Organizer exclusive'],
+        ['fun', 'Various fun activities and cat corpse disposal tips'],
     ])
     .registerDefaultGroups()
     .registerDefaultCommands()
@@ -32,8 +33,10 @@ client.on('commandError', (cmd, err, message, args) => {
 
 client.login(process.env.LOGIN_TOKEN);
 
+state.client = client;
+
 process.on('SIGINT', () => {
-  console.log('Saving state');
-  persistState();
+  console.log('Exporting tourney');
+  exportActiveTourney();
   process.exit(2);
 });

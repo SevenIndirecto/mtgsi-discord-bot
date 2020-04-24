@@ -1,4 +1,4 @@
-import { Message } from 'discord.js';
+import { Message, TextChannel } from 'discord.js';
 import { Command, CommandoClient, CommandoMessage } from 'discord.js-commando';
 import { Tourney, TourneyStatus } from '../../models/tourney';
 import { state } from '../../state';
@@ -12,16 +12,19 @@ module.exports = class RegistrationOpenCommand extends Command {
   constructor(client: CommandoClient) {
     super(client, {
       name: 'registration',
+      aliases: ['reg'],
       group: 'organizer',
       memberName: 'registration',
       description: 'Open registrations for tournament',
       ownerOnly: true,
+      // set to guildOnly to obtain channel
+      guildOnly: true,
       args: [
         {
           key: 'action',
-          prompt: 'Either open, close or limit registration',
+          prompt: 'Either open, close or limit registration or end tournament',
           type: 'string',
-          oneOf: ['open', 'close', 'limit'],
+          oneOf: ['open', 'close', 'limit', 'tourney-end'],
         },
         {
           key: 'tid',
@@ -39,10 +42,17 @@ module.exports = class RegistrationOpenCommand extends Command {
   ): Promise<Message | Message[]> | null {
     if (action === 'open') {
       if (state.tourney) {
-        return message.say(`A tourney is already active`);
+        state.tourney.setStatus(TourneyStatus.RegOpen);
+        return message.say('Opened registration');
       }
-      state.tourney = new Tourney(tid);
-      return message.say(`Opened registration for simple-mode tourney`);
+      if (message.channel instanceof TextChannel) {
+        state.tourney = new Tourney(tid, message.channel);
+        return message.say(`Opened registration for simple-mode swiss tourney. Experimental, have fun crashing.`);
+      } else {
+        return message.say(
+          'Invalid channel type, make sure to use this command in the channel where the tourney is ran not DM.',
+        );
+      }
     }
 
     if (!state.tourney) {
@@ -50,11 +60,18 @@ module.exports = class RegistrationOpenCommand extends Command {
     }
 
     if (action === 'close') {
-      state.tourney.setState(TourneyStatus.RegClosed);
+      state.tourney.setStatus(TourneyStatus.RegClosed);
       return message.say('Registration and decklist submissions closed');
     } else if (action === 'limit') {
-      state.tourney.setState(TourneyStatus.RegLimited);
+      state.tourney.setStatus(TourneyStatus.RegLimited);
       return message.say(`Registration closed, decklist updates still allowed`);
+    } else if (action === 'tourney-end') {
+      if (state.tourney.status !== TourneyStatus.RoundInProgress) {
+        let msg = '**Final Standings:**\n';
+        msg += state.tourney.standingsToString();
+        state.tourney.status = TourneyStatus.Finished;
+        return message.say(msg);
+      }
     }
     return null;
   }

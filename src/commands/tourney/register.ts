@@ -2,11 +2,11 @@ import { Message } from 'discord.js';
 import { Command, CommandoClient, CommandoMessage } from 'discord.js-commando';
 import { state } from '../../state';
 
+const deckRegex = /^[0-9a-z]{5,30}$/;
 module.exports = class RegisterCommand extends Command {
   constructor(client: CommandoClient) {
     super(client, {
       name: 'register',
-      // aliases: ['kitty-cat'],
       group: 'tourney',
       memberName: 'register',
       description: 'Register for a tournament using a decklist',
@@ -16,7 +16,7 @@ module.exports = class RegisterCommand extends Command {
           key: 'deck',
           prompt: 'Enter a deck ID',
           type: 'string',
-          validate: (text: string): boolean => text.length > 5 && text.length < 30,
+          validate: (text: string): boolean => deckRegex.test(text),
         },
       ],
     });

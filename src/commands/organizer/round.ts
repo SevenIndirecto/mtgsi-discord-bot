@@ -1,6 +1,6 @@
+import { oneLine } from 'common-tags';
 import { Message } from 'discord.js';
 import { Command, CommandoClient, CommandoMessage } from 'discord.js-commando';
-import { TourneyStatus } from '../../models/tourney';
 import { state } from '../../state';
 
 module.exports = class RoundCommand extends Command {
@@ -28,35 +28,26 @@ module.exports = class RoundCommand extends Command {
     }
 
     if (action === 'start') {
-      if (![
-        TourneyStatus.RegClosed,
-        TourneyStatus.RegLimited,
-        TourneyStatus.BetweenRounds,
-      ].includes(state.tourney.status)) {
-        return message.say(`Invalid Tourney state. ${state.tourney.statusDisplay()}`);
+      if (state.tourney.startRound()) {
+        return message.say(oneLine`
+          Round ${state.tourney.round + 1} has started,
+          you have ${state.tourney.roundLength} minutes. Have fun!
+        `);
+      } else {
+        return message.say(`Invalid Tourney state. ${state.tourney.statusDisplay()}.`);
       }
-      state.tourney.status = TourneyStatus.RoundInProgress;
-      return message.say(`Round ${state.tourney.round + 1} has started, you have 50 minutes. Have fun!`);
     }
 
     if (action === 'pairings') {
-      if (![
-        TourneyStatus.RegClosed,
-        TourneyStatus.RegLimited,
-        TourneyStatus.BetweenRounds,
-      ].includes(state.tourney.status)) {
-        return message.say(`Invalid Tourney state. ${state.tourney.statusDisplay()}`);
+      if (!state.tourney.waitingForRoundToStart()) {
+        return message.say(`Invalid Tourney state. ${state.tourney.statusDisplay()}.`);
       }
       // Start new round and pairings
-      return message.say(state.tourney.newRound());
+      return message.say(`${state.tourney.newRound()}. \n\n Use \`round start\` to start round.`);
     }
 
     if (action === 'end') {
-      if (state.tourney.status !== TourneyStatus.RoundInProgress) {
-        return message.say(`Invalid Tourney state. ${state.tourney.statusDisplay()}`);
-      }
-      state.tourney.status = TourneyStatus.BetweenRounds;
-      return message.say('Round finished');
+      return message.say(state.tourney.endRound());
     }
 
     return message.say('Invalid action');

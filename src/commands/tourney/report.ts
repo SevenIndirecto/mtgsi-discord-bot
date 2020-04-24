@@ -5,8 +5,8 @@ import { state } from '../../state';
 
 interface ResultReportMsg {
   outcome: string;
-  wins: string;
-  losses: string;
+  wins: number;
+  losses: number;
 }
 
 module.exports = class ReportCommand extends Command {
@@ -27,14 +27,14 @@ module.exports = class ReportCommand extends Command {
         {
           key: 'wins',
           prompt: 'How many games did you win?',
-          type: 'string',
-          oneOf: ['0', '1', '2'],
+          type: 'integer',
+          oneOf: [0, 1, 2],
         },
         {
           key: 'losses',
           prompt: 'How many games did you lose?',
-          type: 'string',
-          oneOf: ['0', '1', '2'],
+          type: 'integer',
+          oneOf: [0, 1, 2],
         },
       ],
     });
@@ -50,8 +50,9 @@ module.exports = class ReportCommand extends Command {
       if (!match) {
         return null;
       }
-      if (match.report(playerId, outcome === 'win', +wins, +losses, outcome === 'draw')) {
-        return message.say(`Reported and waiting for other player to confirm or dispute`);
+      if (match.report(playerId, outcome === 'win', wins, losses, outcome === 'draw')) {
+        const otherPlayer = match.p1 === playerId ? match.p2 : match.p1;
+        return message.say(`Outcome noted. <@${otherPlayer}> please use \`m! confirm\` or \`m! dispute\``);
       } else {
         return message.say('Match already reported or waiting confirmation');
       }

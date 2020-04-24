@@ -7,7 +7,6 @@ module.exports = class ConfirmCommand extends Command {
   constructor(client: CommandoClient) {
     super(client, {
       name: 'confirm',
-      // aliases: ['kitty-cat'],
       group: 'tourney',
       memberName: 'confirm',
       description: 'Confirm match result',

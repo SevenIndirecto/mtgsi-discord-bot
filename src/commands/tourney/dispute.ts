@@ -4,11 +4,9 @@ import { TourneyStatus } from '../../models/tourney';
 import { state } from '../../state';
 
 module.exports = class DisputeCommand extends Command {
-// export class RegisterCommand extends Command {
   constructor(client: CommandoClient) {
     super(client, {
       name: 'dispute',
-      // aliases: ['kitty-cat'],
       group: 'tourney',
       memberName: 'dispute',
       description: 'Dispute match result',
@@ -26,8 +24,9 @@ module.exports = class DisputeCommand extends Command {
       if (!match) {
         return null;
       }
-      if (match.dispute()) {
-        return message.say('Match report nullified, awaiting new report.');
+      if (match.dispute(playerId)) {
+        const otherPlayer = match.p1 === playerId ? match.p2 : match.p1;
+        return message.say(`<@${otherPlayer}> Match report nullified, awaiting new report.`);
       } else {
         return message.say('Match result already confirmed.');
       }

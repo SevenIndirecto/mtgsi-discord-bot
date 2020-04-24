@@ -34,7 +34,7 @@ module.exports = class DevCommand extends Command {
         const losses = _.sample([0, 1, 2]);
         const winner = _.sample([m.p1, m.p2]);
         if (winner) {
-          m.adminReport(winner, wins!, losses!, wins === losses);
+          m.adminReport(winner, wins!, losses!);
         }
       }
       return message.say('Results simulated');

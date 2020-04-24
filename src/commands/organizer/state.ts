@@ -1,7 +1,7 @@
 import { Message } from 'discord.js';
 import { Command, CommandoClient, CommandoMessage } from 'discord.js-commando';
 import { state } from '../../state';
-import { persistState, loadState } from '../../util/persist';
+import { persistState, loadState, exportActiveTourney } from '../../util/persist';
 
 module.exports = class StateManageCommand extends Command {
   constructor(client: CommandoClient) {
@@ -16,13 +16,20 @@ module.exports = class StateManageCommand extends Command {
           key: 'action',
           prompt: 'Reload or persist bot state',
           type: 'string',
-          oneOf: ['reload', 'persist'],
+          oneOf: ['reload', 'persist', 'export'],
         },
       ],
     });
   }
 
   run(message: CommandoMessage, { action }: { action: string }): Promise<Message | Message[]> {
+    if (action === 'export') {
+      if (exportActiveTourney()) {
+        return message.say('Tourney exported');
+      } else {
+        return message.say('Issue exporting tourney');
+      }
+    }
     if (action === 'persist') {
       persistState();
       return message.say('State persisted');

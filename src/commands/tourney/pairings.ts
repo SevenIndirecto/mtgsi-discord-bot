@@ -2,14 +2,13 @@ import { Message } from 'discord.js';
 import { Command, CommandoClient, CommandoMessage } from 'discord.js-commando';
 import { state } from '../../state';
 
-module.exports = class StandingsCommand extends Command {
+module.exports = class PairingsCommand extends Command {
   constructor(client: CommandoClient) {
     super(client, {
-      name: 'standings',
-      aliases: ['registrations'],
+      name: 'pairings',
       group: 'tourney',
-      memberName: 'standings',
-      description: 'Display player standings / registrations',
+      memberName: 'pairings',
+      description: 'Display current round pairings',
       throttling: {
         usages: 1,
         duration: 10,
@@ -22,7 +21,7 @@ module.exports = class StandingsCommand extends Command {
       return message.say('No tournament running currently.');
     }
 
-    return message.say(state.tourney.standingsToString());
+    return message.say(state.tourney.pairings());
   }
 };
 

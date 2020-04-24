@@ -25,16 +25,13 @@ export class Match {
     }
   }
 
-  adminReport(winner: string, wins: number, losses: number, isDraw = false): void {
-    if (this.confirmed) {
-      return;
-    }
-
+  adminReport(winner: string, wins: number, losses: number): boolean {
     this.winner = winner;
     this.wins = wins;
     this.losses = losses;
-    this.draw = isDraw;
+    this.draw = wins === losses;
     this.confirmed = true;
+    return true;
   }
 
   clearReports(): void {
@@ -46,8 +43,8 @@ export class Match {
     this.draw = false;
   }
 
-  dispute(): boolean {
-    if (this.confirmed || this.bye) {
+  dispute(reportingPlayer: string): boolean {
+    if (this.confirmed || this.bye || (reportingPlayer !== this.p1 && reportingPlayer !== this.p2)) {
       return false;
     }
 
@@ -56,7 +53,10 @@ export class Match {
   }
 
   confirm(playerId: string): boolean {
-    if (this.confirmed || this.bye || this.reportedBy.length < 1 || playerId in this.reportedBy) {
+    if (playerId !== this.p1 && playerId !== this.p2) {
+      return false;
+    }
+    if (this.confirmed || this.bye || this.reportedBy.length < 1 || this.reportedBy.includes(playerId)) {
       return false;
     }
     this.reportedBy.push(playerId);

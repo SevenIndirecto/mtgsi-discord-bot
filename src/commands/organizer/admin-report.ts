@@ -4,11 +4,9 @@ import { TourneyStatus } from '../../models/tourney';
 import { state } from '../../state';
 
 interface AdminReportMsg {
-  player1: string;
   winner: string;
-  wins: string;
-  losses: string;
-  draw: string;
+  wins: number;
+  losses: number;
 }
 
 module.exports = class AdminRegisterCommand extends Command {
@@ -29,21 +27,14 @@ module.exports = class AdminRegisterCommand extends Command {
         {
           key: 'wins',
           prompt: 'How many games did the winner win?',
-          type: 'string',
-          oneOf: ['0', '1', '2'],
+          type: 'integer',
+          oneOf: [0, 1, 2],
         },
         {
           key: 'losses',
           prompt: 'How many games did the winner lose?',
-          type: 'string',
-          // TODO: This numeric type / boolean types etc...
-          oneOf: ['0', '1', '2'],
-        },
-        {
-          key: 'draw',
-          prompt: 'Was it a draw?',
-          type: 'string',
-          default: 'false',
+          type: 'integer',
+          oneOf: [0, 1, 2],
         },
       ],
     });
@@ -51,15 +42,19 @@ module.exports = class AdminRegisterCommand extends Command {
 
   run(
     message: CommandoMessage,
-    { player1, winner, wins, losses, draw }: AdminReportMsg,
+    { winner, wins, losses }: AdminReportMsg,
   ): Promise<Message | Message[]> | null {
     if (state.tourney && state.tourney.status === TourneyStatus.RoundInProgress) {
-      const playerId = player1;
+      let playerId = message.mentions.users.first()?.id;
+      if (!playerId) {
+        // Use assume an actual number was used here... though likely this is just a dev thing.
+        playerId = winner;
+      }
       if (!state.tourney.playerToMatchMap.has(playerId)) {
         return null;
       }
       const match = state.tourney.playerToMatchMap.get(playerId);
-      if (match?.adminReport(winner, +wins, +losses, Boolean(draw))) {
+      if (match?.adminReport(playerId, wins, losses)) {
         return message.say('Set match result.');
       }
     }

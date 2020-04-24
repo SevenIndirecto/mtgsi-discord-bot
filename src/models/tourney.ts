@@ -1,6 +1,9 @@
 import { oneLine } from 'common-tags';
+import { addMinutes, differenceInMilliseconds } from 'date-fns/fp';
+import { TextChannel } from 'discord.js';
 import { Match } from './match';
 import { Standing } from './standing';
+import { state } from '../state';
 import { createRandomPairings, createNaiveSwissPairings } from '../util/matchmaking';
 
 export const enum TourneyStatus {
@@ -16,18 +19,26 @@ export class Tourney {
   registrations: Map<string, string | null>;
   status: TourneyStatus;
   rounds: Match[][];
+  roundStartTime: Date | null;
+  roundEndTime: Date | null;
   playerToMatchMap: Map<string, Match>;
+  roundEndReminderTimeout: NodeJS.Timeout | null;
 
 
-  constructor(public id: string, public round = -1) {
+  constructor(
+    public id: string, public channel: TextChannel, public round = -1, public roundLength: number = 50,
+  ) {
     this.registrations = new Map<string, string | null>();
     this.status = TourneyStatus.RegOpen;
     this.rounds = [];
     this.playerToMatchMap = new Map<string, Match>();
+    this.roundStartTime = null;
+    this.roundEndTime = null;
+    this.roundEndReminderTimeout = null;
   }
 
-  setState(state: TourneyStatus): void {
-    this.status = state;
+  setStatus(status: TourneyStatus): void {
+    this.status = status;
   }
 
   toString(): string {
@@ -56,7 +67,16 @@ export class Tourney {
       [TourneyStatus.BetweenRounds]: 'Waiting for round to start',
       [TourneyStatus.Finished]: 'Finished',
     };
-    return `Tourney state: ${description[this.status]}.`;
+    return description[this.status];
+  }
+
+  unreportedPlayers(): string[] {
+    if (this.round < 0) {
+      return [];
+    }
+    return this.rounds[this.round]
+      .filter(match => !match.confirmed)
+      .flatMap(match => [match.p1, match.p2 as string]);
   }
 
   unreportedMatchesInRound(): number {
@@ -90,11 +110,67 @@ export class Tourney {
       }
     }
 
-    // TODO: If we want timers, this should not start the round, but rather close registration
-    this.status = TourneyStatus.RoundInProgress;
     return this.pairings();
   }
 
+  startRound(): boolean {
+    if (this.waitingForRoundToStart()) {
+      this.status = TourneyStatus.RoundInProgress;
+      this.roundStartTime = new Date();
+      this.roundEndTime = addMinutes(this.roundLength, this.roundStartTime);
+
+      this.setRoundEndReminders(this.roundStartTime, this.roundEndTime);
+
+      return true;
+    }
+    return false;
+  }
+
+  endRound(): string {
+    if (this.status !== TourneyStatus.RoundInProgress) {
+      return 'Round not in progress.';
+    }
+    if (this.unreportedMatchesInRound() > 0) {
+      return 'ERROR: Some matches have not been reported.';
+    }
+    this.clearEndRoundReminders();
+    this.status = TourneyStatus.BetweenRounds;
+    return `Round ended at ${new Date()}`;
+  }
+
+  setRoundEndReminders(roundStart: Date, roundEnd: Date): void {
+    this.clearEndRoundReminders();
+    const NUM_MINUTES_WARNING = 5;
+
+    this.roundEndReminderTimeout = state.client!.setTimeout(async () => {
+      let msg = '';
+      for (const player of this.unreportedPlayers()) {
+        msg += `<@${player}> `;
+      }
+      msg += `Warning ${NUM_MINUTES_WARNING} minutes remains in round.`;
+
+      await this.channel.send(msg);
+
+      this.roundEndReminderTimeout = state.client!.setTimeout(() => {
+        let msgEnd = '';
+        for (const player of this.unreportedPlayers()) {
+          msgEnd += `<@${player}> `;
+        }
+        msgEnd += 'The round has ended, process extra turns';
+        this.channel.send(msgEnd);
+      }, differenceInMilliseconds(new Date(), roundEnd));
+    }, differenceInMilliseconds(roundStart, roundEnd) - NUM_MINUTES_WARNING * 60 * 1000);
+  }
+
+  clearEndRoundReminders(): void {
+    if (this.roundEndReminderTimeout) {
+      state.client!.clearTimeout(this.roundEndReminderTimeout);
+    }
+  }
+
+  waitingForRoundToStart(): boolean {
+    return ([TourneyStatus.RegClosed, TourneyStatus.RegLimited, TourneyStatus.BetweenRounds].includes(this.status));
+  }
 
   pairings(): string {
     if (this.round < 0 || this.rounds[this.round].length < 1) {
@@ -109,9 +185,9 @@ export class Tourney {
         pairingsStrings.push(
           oneLine`
             ${i}.
-            <@${match.p1}> (${this.registrations.get(match.p1)})
+            <@${match.p1}> (deck: ${this.registrations.get(match.p1)})
             vs
-            <@${match.p2}> (${this.registrations.get(match.p2)})
+            <@${match.p2}> (deck: ${this.registrations.get(match.p2)})
         `);
       } else {
         pairingsStrings.push(`${i} BYE: <@${match.p1}>`);
@@ -140,10 +216,11 @@ export class Tourney {
           if (player === null) {
             continue;
           }
-          const standing = standings.get(player);
           if (!standings.has(player)) {
             continue;
           }
+          const standing = standings.get(player);
+
           if (match.bye) {
             standing!.setResult(2, 0, true);
           } else if (player === match.winner || match.draw) {
