@@ -6,10 +6,12 @@
     "build": "tsc",
     "dev": "tsc --watch",
     "lint": "eslint src/**/*.ts",
-    "lint:fix": "yarn eslint --fix src/**/*.ts"
+    "lint:fix": "yarn eslint --fix src/**/*.ts",
+    "test": "jest"
   },
   "devDependencies": {
     "@types/common-tags": "^1.8.0",
+    "@types/jest": "^25.2.1",
     "@types/lodash": "^4.14.150",
     "@types/node": "^13.11.1",
     "@types/serialize-javascript": "^1.5.0",
@@ -21,6 +23,8 @@
     "eslint-config-prettier": "^6.10.1",
     "eslint-import-resolver-node": "^0.3.3",
     "eslint-plugin-import": "^2.20.2",
+    "jest": "^25.4.0",
+    "ts-jest": "^25.4.0",
     "typescript": "^3.8.3"
   },
   "dependencies": {

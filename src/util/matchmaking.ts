@@ -3,7 +3,9 @@ import { Match } from '../models/match';
 import { Standing } from '../models/standing';
 import { Tourney } from '../models/tourney';
 
-function createBracket(floaters: Set<string>, unmatched: Set<string>, standings: Map<string, Standing>): string[] {
+export function createBracket(
+  floaters: Set<string>, unmatched: Set<string>, standings: Map<string, Standing>,
+): string[] {
   // Collect all players with max points
   let maxPoints = 0;
   let playersWithMax: string[] = [];
@@ -22,7 +24,7 @@ function createBracket(floaters: Set<string>, unmatched: Set<string>, standings:
   return [...floaters, ...playersWithMax];
 }
 
-function canMatchPlayers(p1: string, p2: string, tourney: Tourney): boolean {
+export function canMatchPlayers(p1: string, p2: string, tourney: Tourney): boolean {
   for (const round of tourney.rounds) {
     for (const match of round) {
       if (match.p1 === p1 && match.p2 === p2 || match.p1 === p2 && match.p2 === p1) {
@@ -33,7 +35,7 @@ function canMatchPlayers(p1: string, p2: string, tourney: Tourney): boolean {
   return true;
 }
 
-function matchPlayersWithinBracket(
+export function matchPlayersWithinBracket(
   bracket: string[],
   bracketMatchedPlayers: Set<string>,
   bracketMatches: Match[],
