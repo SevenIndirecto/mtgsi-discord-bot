@@ -35,7 +35,7 @@
     "dotenv": "^8.2.0",
     "erlpack": "^0.1.3",
     "lodash": "^4.17.19",
-    "serialize-javascript": "^3.0.0",
+    "serialize-javascript": "^3.1.0",
     "utf-8-validate": "^5.0.2",
     "zlib-sync": "^0.1.6"
   },
